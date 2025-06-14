@@ -1,0 +1,147 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model HomeResources {
+  id          Int      @id @default(autoincrement())
+  title       String?
+  subTitle    String?
+  url         String?
+  image       String?
+  description String?
+  module      String   @default("home")
+  type        String?
+  icon        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("home_resources")
+}
+
+model Users {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique
+  password  String
+  name      String?
+  type      Int       @default(0)
+  expired   DateTime?
+  status    Int       @default(0)
+  phone     Int       @unique
+  email     String?   @unique
+  unionId   String?
+  openId    String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  courses     Courses[]
+  attachments AttachMent[]
+
+  @@map("users")
+}
+
+model AttachMent {
+  id        Int      @id @default(autoincrement())
+  type      String?
+  location  String?
+  name      String?
+  ossType   String?
+  usersId   Int
+  status    Int      @default(0) // 0 disable 1 enable
+  desc      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users  Users    @relation(fields: [usersId], references: [id])
+  course Courses?
+
+  @@map("attachments")
+}
+
+model Courses {
+  id          Int      @id @default(autoincrement())
+  title       String
+  subTitle    String?
+  desc        String?
+  coverId     Int?     @unique
+  author      Int
+  originPrice Int?
+  price       Int?
+  status      Int?
+  counts      Int?
+  order       Int?
+  detail      String?
+  type        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contents CoursesContents[]
+  users    Users             @relation(fields: [author], references: [id])
+  cover    AttachMent?       @relation(fields: [coverId], references: [id])
+  tags     CourseOnTags[]
+
+  @@map("courses")
+}
+
+model CoursesContents {
+  id        Int      @id @default(autoincrement())
+  courseId  Int
+  title     String?
+  type      String?
+  order     Int      @default(1000)
+  pid       Int?
+  status    Int
+  author    Int
+  tagId     String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  course    Courses  @relation(fields: [courseId], references: [id])
+
+  parent   CoursesContents?  @relation("CousersContentsRelation", fields: [pid], references: [id]) //self one to many
+  children CoursesContents[] @relation("CousersContentsRelation")
+
+  @@map("courses_contents")
+}
+
+model CourseTags {
+  id     Int     @id @default(autoincrement())
+  name   String?
+  typeId Int?
+  order  Int     @default(1000)
+  status Int     @default(0)
+
+  courses CourseOnTags[]
+  types   CourseTypes?   @relation(fields: [typeId], references: [id])
+
+  @@map("dict_course_tags")
+}
+
+model CourseOnTags {
+  id       Int        @id @default(autoincrement())
+  courseId Int
+  tagId    Int
+  course   Courses    @relation(fields: [courseId], references: [id])
+  tag      CourseTags @relation(fields: [tagId], references: [id])
+}
+
+model CourseTypes {
+  id     Int     @id @default(autoincrement())
+  name   String?
+  order  Int     @default(1000)
+  status Int     @default(0)
+
+  tag CourseTags[]
+
+  @@map("dict_course_types")
+}
