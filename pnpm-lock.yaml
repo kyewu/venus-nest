@@ -55,7 +55,7 @@ importers:
         specifier: ^0.6.0
         version: 0.6.0(@swc/core@1.12.1)(chokidar@4.0.3)
       '@swc/core':
-        specifier: ^1.10.7
+        specifier: ^1.12.1
         version: 1.12.1
       '@types/express':
         specifier: ^5.0.0

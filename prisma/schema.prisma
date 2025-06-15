@@ -46,27 +46,9 @@ model Users {
   updatedAt DateTime  @updatedAt
 
   courses     Courses[]
-  attachments AttachMent[]
+  attachments AttachMents[]
 
   @@map("users")
-}
-
-model AttachMent {
-  id        Int      @id @default(autoincrement())
-  type      String?
-  location  String?
-  name      String?
-  ossType   String?
-  usersId   Int
-  status    Int      @default(0) // 0 disable 1 enable
-  desc      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  users  Users    @relation(fields: [usersId], references: [id])
-  course Courses?
-
-  @@map("attachments")
 }
 
 model Courses {
@@ -86,10 +68,11 @@ model Courses {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  contents CoursesContents[]
-  users    Users             @relation(fields: [author], references: [id])
-  cover    AttachMent?       @relation(fields: [coverId], references: [id])
-  tags     CourseOnTags[]
+  contents       CoursesContents[]
+  users          Users             @relation(fields: [author], references: [id])
+  cover          AttachMents?      @relation(fields: [coverId], references: [id])
+  tags           CourseOnTags[]
+  courseComments CourseComments[]
 
   @@map("courses")
 }
@@ -108,8 +91,9 @@ model CoursesContents {
   updatedAt DateTime @updatedAt
   course    Courses  @relation(fields: [courseId], references: [id])
 
-  parent   CoursesContents?  @relation("CousersContentsRelation", fields: [pid], references: [id]) //self one to many
-  children CoursesContents[] @relation("CousersContentsRelation")
+  parent          CoursesContents?   @relation("CousersContentsRelation", fields: [pid], references: [id]) //self one to many
+  children        CoursesContents[]  @relation("CousersContentsRelation")
+  contentComments ContentsComments[]
 
   @@map("courses_contents")
 }
@@ -144,4 +128,88 @@ model CourseTypes {
   tag CourseTags[]
 
   @@map("dict_course_types")
+}
+
+model AttachMents {
+  id        Int      @id @default(autoincrement())
+  type      String?
+  location  String?
+  name      String?
+  ossType   String?
+  usersId   Int
+  status    Int      @default(0) // 0 disable 1 enable
+  desc      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users      Users                  @relation(fields: [usersId], references: [id])
+  course     Courses?
+  attributes AttachmentAttributes[]
+
+  @@map("attachments")
+}
+
+model AttachmentAttributes {
+  id           Int     @id @default(autoincrement())
+  attachmentId Int
+  attributeId  Int
+  value        String?
+  desc         String?
+
+  attachments AttachMents? @relation(fields: [attachmentId], references: [id])
+  attribute   Attributes   @relation(fields: [attributeId], references: [id])
+
+  @@map("attachments_attributes")
+}
+
+model Attributes {
+  id   Int     @id @default(autoincrement())
+  type String?
+  name String
+  desc String
+
+  attachmentAttributes AttachmentAttributes[]
+}
+
+model Comments {
+  id      Int    @id @default(autoincrement())
+  pid     Int?
+  userId  Int
+  content String
+  hands   Int    @default(0)
+  status  Int    @default(1)
+  isBest  Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parent          Comments?          @relation("CommentsRelation", fields: [pid], references: [id])
+  children        Comments[]         @relation("CommentsRelation")
+  commentsCourse  CourseComments[]
+  commentsContent ContentsComments[]
+
+  @@map("comments")
+}
+
+model CourseComments {
+  id         Int @id @default(autoincrement())
+  coursesId  Int
+  commentsId Int
+
+  courses  Courses  @relation(fields: [coursesId], references: [id])
+  Comments Comments @relation(fields: [commentsId], references: [id])
+
+  @@map("courses_comments")
+}
+
+model ContentsComments {
+  id        Int @id @default(autoincrement())
+  contentId Int
+  commentId Int
+  status    Int @default(1)
+
+  comment Comments        @relation(fields: [commentId], references: [id])
+  content CoursesContents @relation(fields: [contentId], references: [id])
+
+  @@map("contents_comments")
 }
